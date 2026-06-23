@@ -1,0 +1,18 @@
+[
+  {
+    "role": "user",
+    "content": "帮我看看这个 villa 户型图"
+  },
+  {
+    "role": "assistant",
+    "content": "收到，该低密度住宅进深极佳..."
+  },
+  {
+    "role": "user",
+    "content": "帮我看看这个 villa 户型图"
+  },
+  {
+    "role": "assistant",
+    "content": "收到，该低密度住宅进深极佳..."
+  }
+]
