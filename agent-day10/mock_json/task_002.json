@@ -1,0 +1,9 @@
+{
+    "task_id": "TASK-B2",
+    "model": "gpt-4o",
+    "result": {
+        "latency_ms": 1200,
+        "score": 88,
+        "status": "SUCCESS"
+    }
+}

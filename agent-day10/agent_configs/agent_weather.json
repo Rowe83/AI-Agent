@@ -1,0 +1,6 @@
+{
+  "agent_name": "WeatherBot",
+  "tools": [
+    "get_temperature"
+  ]
+}

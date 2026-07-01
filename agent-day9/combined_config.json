@@ -1,0 +1,12 @@
+[
+    {
+        "name": "weather",
+        "version": "1.0",
+        "desc": "查询天气"
+    },
+    {
+        "name": "search",
+        "version": "2.0",
+        "desc": "谷歌搜索"
+    }
+]

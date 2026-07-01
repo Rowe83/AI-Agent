@@ -1,0 +1,14 @@
+[
+  {
+    "agent_name": "WeatherBot",
+    "tools": [
+      "get_temperature"
+    ],
+    "_source_file": "agent_weather.json"
+  },
+  {
+    "template_name": "summary",
+    "max_tokens": 500,
+    "_source_file": "prompt_summary.json"
+  }
+]

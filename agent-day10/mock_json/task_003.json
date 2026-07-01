@@ -1,0 +1,9 @@
+{
+    "task_id": "TASK-C3",
+    "model": "deepseek-chat",
+    "result": {
+        "latency_ms": 780,
+        "score": 62,
+        "status": " FAILED "
+    }
+}

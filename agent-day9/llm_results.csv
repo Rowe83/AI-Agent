@@ -1,0 +1,4 @@
+task_id,prompt_template,user_input,ai_response,status
+101,请将以下文本翻译成英文：,今天天气真好,[Mock AI 回复] 已处理任务 101 的输入。,SUCCESS
+102,提取这段话的关键实体：,小明在2026年加入了微软。,[Mock AI 回复] 已处理任务 102 的输入。,SUCCESS
+103,判断以下评论的情感倾向：,,[Mock AI 回复] 已处理任务 103 的输入。,SUCCESS

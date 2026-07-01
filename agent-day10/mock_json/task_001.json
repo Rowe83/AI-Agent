@@ -1,0 +1,9 @@
+{
+    "task_id": "TASK-A1",
+    "model": "deepseek-reasoner",
+    "result": {
+        "latency_ms": 2450,
+        "score": 95,
+        "status": " SUCCESS "
+    }
+}
