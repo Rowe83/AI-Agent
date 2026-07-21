@@ -1,8 +1,9 @@
 import time
 import asyncio
 from typing import Optional
-from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks, Header
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 # =====================================================================
@@ -25,20 +26,31 @@ app.add_middleware(
     allow_headers=["*"],  # 允许所有自定义请求头
 )
 
+# 使用 HTTPBearer 注册 OpenAPI security scheme，Swagger Authorize 才会真正注入 Authorization 头
+# 注意：不可用普通 Header("authorization")——Swagger UI 会忽略该参数，请求里不会带上令牌
+bearer_scheme = HTTPBearer(
+    auto_error=False,
+    description="在 Authorize 中填写令牌：sk-nexus-2026-gold（无需手写 Bearer 前缀）",
+)
+
 
 # =====================================================================
 # 🔐 2. Depends() 依赖注入：统一网关 API Key 鉴权拦截器
 # =====================================================================
 def verify_api_token(
-    authorization: Optional[str] = Header(None, description="Bearer 格式的令牌")
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
 ):
     """
     前置拦截器：审计 HTTP 请求头中是否包含合规的凭证。
     """
-    # 模拟从环境变量或 Redis 中读取系统密钥
-    SUPER_SECRET_KEY = "Bearer sk-nexus-2026-gold"
+    # 模拟从环境变量或 Redis 中读取系统密钥（仅 token 本体，Bearer 前缀由 HTTPBearer 解析）
+    SUPER_SECRET_KEY = "sk-nexus-2026-gold"
 
-    if not authorization or authorization != SUPER_SECRET_KEY:
+    if (
+        not credentials
+        or credentials.scheme.lower() != "bearer"
+        or credentials.credentials != SUPER_SECRET_KEY
+    ):
         # 一旦鉴权失败，立即就地熔断，底层业务路由完全不会被触发，确保服务器算力安全
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
