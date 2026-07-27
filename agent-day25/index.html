@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Nexus - 智能问答终端 2026</title>
+    <!-- 🌟 引入 Tailwind CSS CDN 做现代化极简 UI 渲染 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                500: "#6366f1",
+                600: "#4f46e5",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <!-- 引入 Lucide 矢量图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+      /* 隐藏滚动条但保留滚动能力 */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* 闪烁光标效果 */
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0;
+        }
+      }
+      .animate-blink {
+        animation: blink 1s infinite;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-gray-950 text-gray-100 min-h-screen flex flex-col font-sans antialiased selection:bg-brand-500 selection:text-white"
+  >
+    <!-- 顶部 Header 导航栏 -->
+    <header
+      class="h-16 border-b border-gray-800/80 bg-gray-900/50 backdrop-blur sticky top-0 z-50 flex items-center justify-between px-4 sm:px-8"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-brand-500/20"
+        >
+          <i data-lucide="bot" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base text-gray-100 leading-none">
+            AI Nexus Terminal
+          </h1>
+          <p class="text-xs text-gray-400 mt-1 flex items-center gap-1.5">
+            <span
+              class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"
+            ></span>
+            FastAPI Engine Online
+          </p>
+        </div>
+      </div>
+
+      <!-- 功能按钮组 -->
+      <div class="flex items-center gap-2">
+        <!-- 重新生成 Session 按钮 -->
+        <button
+          id="btn-new-chat"
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-gray-800/80 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700/50 transition-all active:scale-95"
+        >
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span>新建会话</span>
+        </button>
+        <!-- 清空控制台视图 -->
+        <button
+          id="btn-clear-ui"
+          class="p-2 text-gray-400 hover:text-gray-200 hover:bg-gray-800 rounded-lg transition-colors"
+          title="清空屏显"
+        >
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- 主消息展示区 (Message List) -->
+    <main
+      id="chat-container"
+      class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 overflow-y-auto space-y-6 no-scrollbar"
+    >
+      <!-- 欢迎导言卡片 -->
+      <div id="welcome-card" class="my-12 text-center space-y-4">
+        <div
+          class="inline-flex p-4 bg-gray-900/80 border border-gray-800 rounded-2xl shadow-2xl mb-2"
+        >
+          <i data-lucide="sparkles" class="w-8 h-8 text-brand-500"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-100">有什么我可以帮您的？</h2>
+        <p class="text-sm text-gray-400 max-w-md mx-auto">
+          基于 FastAPI + SQLite
+          持久化支持。输入任何问题，体验流式问答与多轮上下文记忆。
+        </p>
+      </div>
+
+      <!-- 消息列表插入锚点 -->
+      <div id="message-list" class="space-y-6"></div>
+    </main>
+
+    <!-- 底部 Input 输入区域 -->
+    <footer
+      class="p-4 sm:p-6 bg-gradient-to-t from-gray-950 via-gray-950 to-transparent sticky bottom-0"
+    >
+      <div class="max-w-4xl mx-auto">
+        <form
+          id="chat-form"
+          class="relative bg-gray-900/90 border border-gray-800 focus-within:border-brand-500/80 rounded-2xl shadow-2xl transition-all duration-200"
+        >
+          <textarea
+            id="user-input"
+            rows="1"
+            placeholder="输入问题... (Enter 发送，Shift + Enter 换行)"
+            class="w-full bg-transparent px-4 py-3.5 pr-14 text-sm text-gray-100 placeholder-gray-500 focus:outline-none resize-none max-h-36 no-scrollbar"
+          ></textarea>
+
+          <!-- 发送按钮 -->
+          <button
+            type="submit"
+            id="btn-send"
+            disabled
+            class="absolute right-2.5 bottom-2.5 p-2 bg-brand-600 hover:bg-brand-500 disabled:opacity-40 disabled:hover:bg-brand-600 text-white rounded-xl transition-all active:scale-95 shadow-md shadow-brand-500/20"
+          >
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </form>
+
+        <div
+          class="mt-2 text-center text-xs text-gray-500 flex items-center justify-center gap-2"
+        >
+          <span
+            >Session ID:
+            <code id="session-display" class="text-brand-400 font-mono"
+              >--</code
+            ></span
+          >
+          <span>•</span>
+          <span>FastAPI + SQLite Backend</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- 🌟 前端逻辑控制核心 (ES Modules JavaScript) -->
+    <script>
+      // 基础配置与 FastAPI 后端网关对齐
+      const BACKEND_URL = "http://127.0.0.1:8000";
+
+      // UI 状态管理
+      let currentSessionId = localStorage.getItem("chat_session_id");
+      if (!currentSessionId) {
+        currentSessionId =
+          "session_" + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem("chat_session_id", currentSessionId);
+      }
+
+      // DOM 元素引用
+      const chatContainer = document.getElementById("chat-container");
+      const messageList = document.getElementById("message-list");
+      const welcomeCard = document.getElementById("welcome-card");
+      const userInput = document.getElementById("user-input");
+      const chatForm = document.getElementById("chat-form");
+      const btnSend = document.getElementById("btn-send");
+      const sessionDisplay = document.getElementById("session-display");
+      const btnNewChat = document.getElementById("btn-new-chat");
+      const btnClearUi = document.getElementById("btn-clear-ui");
+
+      // 初始化渲染
+      sessionDisplay.innerText = currentSessionId;
+      lucide.createIcons();
+      loadHistoryMessages();
+
+      // 自动高度调整组件
+      userInput.addEventListener("input", () => {
+        userInput.style.height = "auto";
+        userInput.style.height = Math.min(userInput.scrollHeight, 144) + "px";
+        btnSend.disabled = !userInput.value.trim();
+      });
+
+      // 键盘监听（Enter 发送，Shift+Enter 换行）
+      userInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          if (userInput.value.trim()) {
+            chatForm.requestSubmit();
+          }
+        }
+      });
+
+      // 1. 自动滚底函数
+      function scrollToBottom() {
+        chatContainer.scrollTo({
+          top: chatContainer.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+
+      // 2. 动态追加消息气泡
+      function appendMessageBubble(role, content = "") {
+        welcomeCard.classList.add("hidden");
+
+        const isUser = role === "user";
+        const messageWrapper = document.createElement("div");
+        messageWrapper.className = `flex gap-3 sm:gap-4 ${
+          isUser ? "flex-row-reverse" : "flex-row"
+        }`;
+
+        const avatarHtml = isUser
+          ? `
+        <div class="w-8 h-8 rounded-xl bg-gray-800 border border-gray-700 flex items-center justify-center flex-shrink-0 text-gray-300">
+          <i data-lucide="user" class="w-4 h-4"></i>
+        </div>
+      `
+          : `
+        <div class="w-8 h-8 rounded-xl bg-brand-600 flex items-center justify-center flex-shrink-0 text-white shadow-md shadow-brand-500/20">
+          <i data-lucide="bot" class="w-4 h-4"></i>
+        </div>
+      `;
+
+        const bubbleClass = isUser
+          ? "bg-brand-600 text-white rounded-2xl rounded-tr-none px-4 py-3 max-w-[85%] sm:max-w-[75%] shadow-md text-sm leading-relaxed"
+          : "bg-gray-900 border border-gray-800 text-gray-100 rounded-2xl rounded-tl-none px-4 py-3 max-w-[85%] sm:max-w-[75%] shadow-md text-sm leading-relaxed prose prose-invert";
+
+        messageWrapper.innerHTML = `
+        ${avatarHtml}
+        <div class="${bubbleClass}">
+          <div class="message-content">${content}</div>
+        </div>
+      `;
+
+        messageList.appendChild(messageWrapper);
+        lucide.createIcons();
+        scrollToBottom();
+
+        return messageWrapper.querySelector(".message-content");
+      }
+
+      // 3. 动态追加加载思考动画 (Loading Skeleton)
+      function appendLoadingBubble() {
+        welcomeCard.classList.add("hidden");
+        const loadingWrapper = document.createElement("div");
+        loadingWrapper.id = "loading-bubble";
+        loadingWrapper.className = "flex gap-3 sm:gap-4 flex-row";
+        loadingWrapper.innerHTML = `
+        <div class="w-8 h-8 rounded-xl bg-brand-600 flex items-center justify-center flex-shrink-0 text-white">
+          <i data-lucide="bot" class="w-4 h-4"></i>
+        </div>
+        <div class="bg-gray-900 border border-gray-800 text-gray-400 rounded-2xl rounded-tl-none px-4 py-3 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce"></span>
+          <span class="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+          <span class="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+        </div>
+      `;
+        messageList.appendChild(loadingWrapper);
+        lucide.createIcons();
+        scrollToBottom();
+      }
+
+      function removeLoadingBubble() {
+        const loader = document.getElementById("loading-bubble");
+        if (loader) loader.remove();
+      }
+
+      // 4. 调用 Day 12 FastAPI 拉取历史消息
+      async function loadHistoryMessages() {
+        try {
+          const response = await fetch(
+            `${BACKEND_URL}/history?session_id=${currentSessionId}&limit=50`
+          );
+          if (!response.ok) return;
+          const data = await response.json();
+
+          if (data.length > 0) {
+            welcomeCard.classList.add("hidden");
+            messageList.innerHTML = "";
+            data.forEach((item) => {
+              appendMessageBubble(item.role, item.content);
+            });
+          }
+        } catch (err) {
+          console.warn("⚠️ 无法连接后端 FastAPI，处于冷启动演示模式。");
+        }
+      }
+
+      // 5. 核心：提交问题并呼叫 FastAPI 后端
+      chatForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const prompt = userInput.value.trim();
+        if (!prompt) return;
+
+        // 渲染用户气泡并清空输入框
+        appendMessageBubble("user", prompt);
+        userInput.value = "";
+        userInput.style.height = "auto";
+        btnSend.disabled = true;
+
+        // 显示 AI 加载状态
+        appendLoadingBubble();
+
+        try {
+          // 发起 POST /chat 请求到 Day 12 的 FastAPI 后端
+          const response = await fetch(`${BACKEND_URL}/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              session_id: currentSessionId,
+              message: prompt,
+            }),
+          });
+
+          removeLoadingBubble();
+
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
+
+          const data = await response.json();
+          // 渲染 AI 答复
+          appendMessageBubble("assistant", data.reply);
+        } catch (err) {
+          removeLoadingBubble();
+          appendMessageBubble(
+            "assistant",
+            `<span class="text-rose-400">🛑 连接网关失败: ${err.message}。请确保 day19_ai_assistant_backend.py 已在本地 8000 端口拉起。</span>`
+          );
+        }
+      });
+
+      // 6. 辅助工具按钮动作
+      btnNewChat.addEventListener("click", () => {
+        currentSessionId =
+          "session_" + Math.random().toString(36).substring(2, 9);
+        localStorage.setItem("chat_session_id", currentSessionId);
+        sessionDisplay.innerText = currentSessionId;
+        messageList.innerHTML = "";
+        welcomeCard.classList.remove("hidden");
+      });
+
+      btnClearUi.addEventListener("click", () => {
+        messageList.innerHTML = "";
+        welcomeCard.classList.remove("hidden");
+      });
+    </script>
+  </body>
+</html>
