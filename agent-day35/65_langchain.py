@@ -66,7 +66,7 @@ chain = transform_node | step1_chain
 
 # 三、条件分支路由
 # 定义分类 Prompt
-classify_prompt = ChatPromptTemplate.from_template("判断以下用户的反馈类型，只返回'投诉'或'建议'：\n{feedback}")
+classify_prompt = ChatPromptTemplate.from_template("判断以下用户的反馈类型，只返回'投诉'或'建议'或'其他'：\n{feedback}")
 classify_chain = classify_prompt | llm | StrOutputParser()
 
 # 定义分支链
@@ -87,5 +87,5 @@ main_chain = (
     | router_branch
 )
 
-res = main_chain.invoke({"feedback": "你们的手机屏幕显示效果很差，希望改进。"})
+res = main_chain.invoke({"feedback": "咨询一下公司营业时间是多久"})
 print(res)
